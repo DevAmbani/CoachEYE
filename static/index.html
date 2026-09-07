@@ -285,17 +285,12 @@
         sourcesDiv.innerHTML = `<p><strong>Sources:</strong></p>`;
 
         uniqueSources.forEach((source) => {
-          const filePath = source.replace("/static", "");
-          const fileUrl = `file:///Users/pavankumardharmoju/Documents/GitHub/langchain-rag-tutorial/${filePath}`;
-
-          const sourceButton = document.createElement("button");
-          sourceButton.textContent = "Open Source File";
-          sourceButton.addEventListener("click", () => {
-            alert(`Opening file: ${fileUrl}`);
-            window.open(fileUrl, "_blank");
-          });
-
-          sourcesDiv.appendChild(sourceButton);
+          const label = document.createElement("span");
+          label.textContent = source;
+          label.style.display = "block";
+          label.style.fontFamily = "monospace";
+          label.style.marginTop = "4px";
+          sourcesDiv.appendChild(label);
         });
 
         messageDiv.appendChild(sourcesDiv);

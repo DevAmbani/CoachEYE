@@ -1,177 +1,87 @@
-CoachEYE
-========
+# CoachEYE
 
-Welcome to the CoachEYE repository! This project provides a chatbot interface tailored for assisting coaches and analysts of the Northwestern soccer team. It incorporates machine learning, a streamlined front-end interface, and a robust backend for generating tactical insights, analyzing team data, and improving player performance.
+A retrieval-augmented (RAG) chatbot for the Northwestern men's soccer coaching staff. It ingests text summaries (match reports, team stats, player logs, glossaries) into a local Chroma vector store, then answers coaching questions with a frontier LLM grounded in that context.
 
-* * * * *
+## Stack
 
-📂 Folder Structure
--------------------
+- Backend: Flask + LangChain 0.2 + OpenAI (`gpt-4o`)
+- Vector store: Chroma (local, persisted to `chroma/`)
+- Frontend: single-page `static/index.html` that calls the Flask API
 
-.
+## Layout
 
-├── app
+```
+app/
+  app.py            # Flask API (POST /chat, GET /health)
+  chatbot.py        # RAG pipeline: retrieval + prompt + LLM call
+scripts/
+  create_database.py  # Ingests data_processed/ into Chroma
+static/
+  index.html        # Chat UI
+data_processed/     # You provide: .txt / .md files to ingest (gitignored)
+chroma/             # Generated vector store (gitignored)
+requirements.txt
+```
 
-│   ├── app.py                # Main Flask application
+## Setup
 
-│   ├── chatbot1.py           # Chatbot logic implementation
+Requires Python 3.10+.
 
-│   ├── compare_embeddings.py # Embedding comparison logic
-
-├── static
-
-│   ├── index.html            # Front-end UI for the chatbot
-
-├── scripts
-
-│   ├── create_database.py    # Script to create the Chroma database
-
-│   ├── chatbot.py            # Backend logic for chatbot responses
-
-├── dataprocessed             # Folder for processed soccer data
-
-├── chroma                    # Chroma vectorstore folder
-
-└── README.md                 # Documentation file
-
-* * * * *
-
-🛠️ Prerequisites
------------------
-
-Ensure you have the following installed:
-
--   Python (>= 3.8)
-
--   pip (Python package manager)
-
-* * * * *
-
-📦 Setup Instructions
----------------------
-
-Follow these steps to set up and run the project:
-
-### 1\. Clone the Repository
-
-git clone https://github.com/your-username/northwestern-soccer-assistant.git
-
-cd northwestern-soccer-assistant
-
-### 2\. Create a Virtual Environment
-
+```bash
 python -m venv venv
-
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-### 3\. Run this command
-conda install onnxruntime -c conda-forge
-
-### 4\. Install Dependencies
-
+source venv/bin/activate            # Windows: venv\Scripts\activate
+# On Apple Silicon, install onnxruntime via conda first if pip fails:
+#   conda install onnxruntime -c conda-forge
 pip install -r requirements.txt
+```
 
-### 5\. Configure OPENAI_API_KEY
+Set your OpenAI key (either export it or drop it in a `.env` file at the repo root):
 
-export OPENAI_API_KEY = "Your_API_Key"
+```bash
+export OPENAI_API_KEY="sk-..."
+```
 
+## Prepare the corpus
 
-### 6\. Prepare the Chroma Database
+Drop plain-text or markdown files into `data_processed/`. Anything under this folder (recursive) matching `*.txt` or `*.md` gets embedded. Suggested inputs for this repo's use case:
 
-Navigate to the scripts folder and run the create_database.py script to generate the Chroma database from your data:
+- Per-match team summaries generated from the Wyscout team CSVs
+- Per-player season summaries generated from the player CSV
+- The Wyscout variable glossaries
 
+Then build the vector store:
+
+```bash
 python scripts/create_database.py
+```
 
-* * * * *
+Environment variables the script honors:
 
-🚀 Running the Application
---------------------------
+| Var | Default | Purpose |
+| --- | --- | --- |
+| `OPENAI_API_KEY` | _(required)_ | OpenAI auth |
+| `DATA_PATH` | `data_processed/` | Corpus root |
+| `CHROMA_PATH` | `chroma/` | Persisted vector store |
+| `OPENAI_MODEL` | `gpt-4o` | Chat model |
+| `RELEVANCE_THRESHOLD` | `0.7` | Min cosine relevance to include a chunk |
+| `TOP_K` | `3` | Chunks retrieved per query |
 
-### 1\. Start the Backend: Navigate to the app folder and run the Flask application:
+## Run
 
-python app/app.py
+```bash
+cd app
+python app.py
+```
 
-1.  The application should be running at http://127.0.0.1:5000.
+Open `static/index.html` in a browser (double-click, or `open static/index.html`). It talks to the API at `http://127.0.0.1:5000/chat`.
 
-### 2\. Open the Front-End:\
+### API
 
-The chatbot and front-end reference file paths using the placeholder file:///Users/pavankumardharmoju/Documents/GitHub/langchain-rag-tutorial/. This path must be updated to match your current working directory.
+`POST /chat` — body `{"message": "..."}` → `{"response": "...", "sources": [...]}`
 
--   Open the static/index.html file in a browser.
+`GET /health` — `{"status": "ok"}`
 
--   Interact with the chatbot for soccer insights and assistance.
+## Notes
 
-* * * * *
-
-📑 Features
------------
-
--   Tactical Analysis: Generate actionable strategies for in-game scenarios.
-
--   Player Development Insights: Analyze player performance metrics for improvement.
-
--   Interactive Chat Interface: Easy-to-use front-end interface for soccer queries.
-
--   Quick Prompts: Pre-defined suggestions for common coaching scenarios.
-
-* * * * *
-
-📂 Key Files and Their Roles
-----------------------------
-
-app/app.py -> Main Flask application, handles API requests for the chatbot
-app/chatbot1.py -> Core chatbot logic
-app/compare_embeddings.py -> Compares embeddings for similarity search
-static/index.html -> Front-end interface for user interactions
-scripts/create_database.py -> Creates the Chroma database from data files
-scripts/chatbot.py -> Contains helper functions and utilities for the chatbot
-dataprocessed -> Folder containing processed soccer data
-chroma -> Folder containing Chroma vectorstore data
-
-* * * * *
-
-🧪 Testing and Validation
--------------------------
-
-1.  Ensure all Python scripts execute without errors.
-
-2.  Verify the chatbot generates responses with relevant soccer insights.
-
-3.  Test the database creation process using create_database.py.
-
-4.  Validate that the front-end interface connects seamlessly with the backend.
-
-* * * * *
-
-🤝 Contributing
----------------
-
-Contributions are welcome! To contribute:
-
-1.  Fork the repository.
-
-2.  Create a feature branch (git checkout -b feature-name).
-
-3.  Commit your changes (git commit -m "Add feature-name").
-
-4.  Push to your fork (git push origin feature-name).
-
-5.  Create a pull request.
-
-* * * * *
-
-📝 License
-----------
-
-This project is licensed under the MIT License. See the LICENSE file for details.
-
-* * * * *
-
-📬 Contact
-----------
-
-For questions or support, please contact:
-
--   Team Name: SoccerSynth
-
--   Email: dharmojupavankumar@gmail.com
+- If retrieval returns nothing above `RELEVANCE_THRESHOLD`, the chatbot falls back to a plain LLM answer and returns an empty `sources` list.
+- `chroma/` and `data_processed/` are gitignored; commit neither the embeddings nor the raw corpus.

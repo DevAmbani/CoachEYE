@@ -1,5 +1,7 @@
 .env
-venv
-/__pycacahe__/
-/app/__pycacahe__/
-*.DS_store
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+chroma/
+data_processed/
